@@ -287,7 +287,7 @@ http://localhost:8080
 
 Open:
 
-`Slack API Apps Page`
+`Slack API Apps Page` https://api.slack.com/apps
 
 Click:
 
@@ -302,7 +302,7 @@ Inside your Slack app:
 
 Navigate to:
 
-`Incoming Webhooks`
+`Incoming Webhooks` 
 
 Enable:
 
@@ -544,4 +544,18 @@ Built using:
 Created by **Prajwal Prasanna** 🚀
 
 ⭐ If you found this project useful, consider starring the repository.
+
+# 🌍 Open Source Usage
+
+This project is completely free to use, modify, and share. 🚀
+
+Feel free to:
+
+* ✅ Use it in your personal or enterprise projects
+* ✅ Customize and extend the workflows
+* ✅ Share it with your team or community
+* ✅ Contribute improvements and new features
+
+If you build something interesting using this project, contributions and feedback are always welcome! 🎉
+
 
