@@ -1,1096 +1,547 @@
-# \# 🚨 Centralized Incident Management Architecture
+# 🚨 Centralized Incident Management Architecture
 
-# 
+This Kestra workflow is designed as a centralized incident management system. ⚙️
 
-# This Kestra workflow is designed as a centralized incident management system. ⚙️
+It uses a Flow Trigger to monitor other Kestra workflows for failures, captures detailed execution context, and orchestrates automated actions based on severity including:
 
-# 
+* 📢 Slack notifications
+* 🎫 ServiceNow incident creation
+* 📝 Operational logging
+* 🚦 Severity-based routing
+* 🔁 Retry orchestration
 
-# It uses a Flow Trigger to monitor other Kestra workflows for failures, captures detailed execution context, and orchestrates automated actions based on severity including:
+---
 
-# 
+# ⚠️ Important Configuration Notes
 
-# 📢 Slack notifications
+## 📌 Upstream Flow Requirements
 
-# 🎫 ServiceNow incident creation
+Ensure upstream workflows publish structured error details as outputs.
 
-# 📝 Operational logging
+The `incident-management` workflow expects an `errorDetails` JSON object for comprehensive context capture including:
 
-# 🚦 Severity-based routing
+* ❌ failed task name
+* 💬 error message
+* 📚 stack trace
+* 🔄 retry count
+* 📦 input payload
 
-# 🔁 Retry orchestration
+## 🧩 Example Upstream Flow Configuration
 
-# 
+```yaml
+outputs:
+  - id: errorDetails
+    type: JSON
+    value: |
+      {
+        "message": "{{ task.outputs.errorDetails.value.error.message | default('') }}",
+        "stackTrace": "{{ task.outputs.errorDetails.value.error.stackTrace | default('') }}",
+        "errorDetailsId": "{{ task.outputs.errorDetails.value.id | default('Unknown') }}",
+        "retryAttempt": "{{ task.outputs.errorDetails.value.attempts.count | default(0) }}",
+        "inputPayload": {{ task.outputs.errorDetails.value.inputs | json | default('{}') }}
+      }
 
-# \---
+tasks:
+  - id: my_failing_task
+    type: some.plugin.FailingTask
 
-# 
+    errors:
+      - id: errorDetails
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ taskrun | json }}"
+```
 
-# \# ⚠️ Important Configuration Notes
+---
 
-# 
+# 🔐 Required Kestra Secrets
 
-# \## 📌 Upstream Flow Requirements
+Configure the following secrets in your Kestra environment.
 
-# 
+## 💬 Slack Secrets
 
-# Ensure upstream workflows publish structured error details as outputs.
+```bash
+kestra secrets create SLACK_CRITICAL_WEBHOOK "<webhook-url>"
 
-# 
+kestra secrets create SLACK_GENERAL_WEBHOOK "<webhook-url>"
 
-# The `incident-management` workflow expects an `errorDetails` JSON object for comprehensive context capture including:
+kestra secrets create SLACK_INFO_WEBHOOK "<webhook-url>"
+```
 
-# 
+## 🎫 ServiceNow Secrets
 
-# ❌ failed task name
+```bash
+kestra secrets create SNOW_DOMAIN "<instance>.service-now.com"
 
-# 💬 error message
+kestra secrets create SNOW_USERNAME "<username>"
 
-# 📚 stack trace
+kestra secrets create SNOW_PASSWORD "<password>"
 
-# 🔄 retry count
+kestra secrets create SNOW_CLIENT_ID "<client-id>"
 
-# 📦 input payload
+kestra secrets create SNOW_CLIENT_SECRET "<client-secret>"
+```
 
-# 
+---
 
-# \## 🧩 Example Upstream Flow Configuration
+# 🏷️ Recommended Production Labels
 
-# 
+Apply labels to your production workflows to enrich incident context and improve routing.
 
-# ```yaml
+## 📋 Example
 
-# outputs:
+```yaml
+labels:
+  app_name: payment-service
+  environment: production
+  business_impact: High
+```
 
-# &#x20; - id: errorDetails
+These labels are automatically propagated into:
 
-# &#x20;   type: JSON
+* 📢 Slack alerts
+* 🎫 ServiceNow incidents
+* 📝 Operational logs
+* 🚦 Severity classification
 
-# &#x20;   value: |
+---
 
-# &#x20;     {
+# 🚨 Supported Severity Levels
 
-# &#x20;       "message": "{{ task.outputs.errorDetails.value.error.message | default('') }}",
+| Severity  | Action                                        |
+| --------- | --------------------------------------------- |
+| 🔴 High   | Slack Critical Alert + P1 ServiceNow Incident |
+| 🟠 Medium | Slack Warning Alert + P2 ServiceNow Incident  |
+| 🟢 Low    | Slack Informational Notification              |
 
-# &#x20;       "stackTrace": "{{ task.outputs.errorDetails.value.error.stackTrace | default('') }}",
+---
 
-# &#x20;       "errorDetailsId": "{{ task.outputs.errorDetails.value.id | default('Unknown') }}",
+# 👀 Observability Benefits
 
-# &#x20;       "retryAttempt": "{{ task.outputs.errorDetails.value.attempts.count | default(0) }}",
+This architecture provides:
 
-# &#x20;       "inputPayload": {{ task.outputs.errorDetails.value.inputs | json | default('{}') }}
+* 📡 centralized workflow monitoring
+* ⚡ real-time operational visibility
+* 🏢 enterprise incident automation
+* 📏 standardized failure handling
+* 🧾 audit-ready execution tracking
+* ♻️ reusable orchestration patterns
 
-# &#x20;     }
+---
 
-# 
+# ✨ Features
 
-# tasks:
+## 🤖 Automated Workflow Failure Detection
 
-# &#x20; - id: my\_failing\_task
+Detects:
 
-# &#x20;   type: some.plugin.FailingTask
+* ❌ FAILED
+* ⚠️ WARNING
+* 🛑 KILLED executions
 
-# 
+Event-driven orchestration using Flow Triggers ⚡
 
-# &#x20;   errors:
+---
 
-# &#x20;     - id: errorDetails
+## 💬 Real-Time Slack Notifications
 
-# &#x20;       type: io.kestra.plugin.core.debug.Return
+Sends alerts to dedicated Slack channels 📢
 
-# &#x20;       format: "{{ taskrun | json }}"
+Severity-based routing:
 
-# ```
+* 🔴 High
+* 🟠 Medium
+* 🟢 Low
 
-# 
+Includes:
 
-# \---
+* 🆔 Flow ID
+* 🔢 Execution ID
+* 🗂️ Namespace
+* 🌍 Environment
+* ❌ Failed task
+* 💬 Error message
 
-# 
+---
 
-# \# 🔐 Required Kestra Secrets
+## 🎫 ServiceNow Incident Creation
 
-# 
+Automatically creates:
 
-# Configure the following secrets in your Kestra environment.
+* 🚨 P1 incidents for High severity
+* ⚠️ P2 incidents for Medium severity
 
-# 
+Includes:
 
-# \## 💬 Slack Secrets
+* 🔗 Correlation IDs
+* 🏷️ Application metadata
+* 🌍 Environment metadata
+* 🔄 Retry count
+* 📦 Payload snapshot
 
-# 
+---
 
-# ```bash
+## 🧠 Dynamic Execution Context Capture
 
-# kestra secrets create SLACK\_CRITICAL\_WEBHOOK "<webhook-url>"
+Captures:
 
-# 
+* ❌ Failed task name
+* 💬 Error message
+* 📚 Stack trace
+* 📦 Input payload
+* 🔄 Retry attempts
+* 🆔 Execution metadata
 
-# kestra secrets create SLACK\_GENERAL\_WEBHOOK "<webhook-url>"
+---
 
-# 
+## 🛡️ Production-Ready Reliability
 
-# kestra secrets create SLACK\_INFO\_WEBHOOK "<webhook-url>"
+Includes:
 
-# ```
+* 🔁 Exponential retries
+* ⏳ Retry backoff
+* 📈 Retry max intervals
+* ⌛ Timeout handling
+* 🔐 Secret management
+* 🧩 Failure isolation patterns
 
-# 
+---
 
-# \## 🎫 ServiceNow Secrets
+# 🏗️ Architecture
 
-# 
+```text
+Kestra Workflow Failure
+        │
+        ▼
+Flow Trigger Listener
+        │
+        ▼
+Context Enrichment
+        │
+ ┌──────┼──────┐
+ ▼      ▼      ▼
+Slack  SNOW   Logging
+Alert Incident Audit
+```
 
-# ```bash
+---
 
-# kestra secrets create SNOW\_DOMAIN "<instance>.service-now.com"
+# 📁 Repository Structure
 
-# 
+```text
+.
+├── flows/
+│   ├── incident-management.yaml
+│   └── sample-failing-flow.yaml
+│
+├── README.md
+└── assets/
+```
 
-# kestra secrets create SNOW\_USERNAME "<username>"
+---
 
-# 
+# ✅ Prerequisites
 
-# kestra secrets create SNOW\_PASSWORD "<password>"
+Before using this project, ensure you have:
 
-# 
+* ⚙️ Kestra installed
+* 💬 A Slack workspace
+* 🎫 A ServiceNow instance
+* 🔐 Kestra secrets configured
 
-# kestra secrets create SNOW\_CLIENT\_ID "<client-id>"
+---
 
-# 
+# 🚀 Installing Kestra
 
-# kestra secrets create SNOW\_CLIENT\_SECRET "<client-secret>"
+## 🐳 Docker Compose
 
-# ```
+```yaml
+version: '3'
 
-# 
+services:
+  kestra:
+    image: kestra/kestra:latest
 
-# \---
+    ports:
+      - "8080:8080"
 
-# 
+    command: server standalone
+```
 
-# \# 🏷️ Recommended Production Labels
+## ▶️ Start Kestra
 
-# 
+```bash
+docker compose up -d
+```
 
-# Apply labels to your production workflows to enrich incident context and improve routing.
+## 🌐 Open
 
-# 
+```text
+http://localhost:8080
+```
 
-# \## 📋 Example
+---
 
-# 
+# 💬 Slack Webhook Configuration
 
-# ```yaml
+## 1️⃣ Step 1 — Create a Slack App
 
-# labels:
+Open:
 
-# &#x20; app\_name: payment-service
+`Slack API Apps Page`
 
-# &#x20; environment: production
+Click:
 
-# &#x20; business\_impact: High
+* ➕ Create New App
+* 🛠️ From Scratch
 
-# ```
+---
 
-# 
+## 2️⃣ Step 2 — Enable Incoming Webhooks
 
-# These labels are automatically propagated into:
+Inside your Slack app:
 
-# 
+Navigate to:
 
-# 📢 Slack alerts
+`Incoming Webhooks`
 
-# 🎫 ServiceNow incidents
+Enable:
 
-# 📝 Operational logs
+✅ Activate Incoming Webhooks
 
-# 🚦 Severity classification
+---
 
-# 
+## 3️⃣ Step 3 — Create Webhooks
 
-# \---
+Click:
 
-# 
+`Add New Webhook to Workspace`
 
-# \# 🚨 Supported Severity Levels
+Select channels such as:
 
-# 
+* 🚨 #critical-alerts
+* 🧑‍💻 #dev-alerts
+* 📢 #flow-notifications
 
-# | Severity  | Action                                        |
+Copy generated webhook URLs.
 
-# | --------- | --------------------------------------------- |
+## 📌 Example
 
-# | 🔴 High   | Slack Critical Alert + P1 ServiceNow Incident |
+```text
+https://hooks.slack.com/services/XXXX/YYYY/ZZZZ
+```
 
-# | 🟠 Medium | Slack Warning Alert + P2 ServiceNow Incident  |
+---
 
-# | 🟢 Low    | Slack Informational Notification              |
+# 🔐 Configure Slack Secrets in Kestra
 
-# 
+Add secrets using Kestra CLI:
 
-# \---
+```bash
+kestra secrets create SLACK_CRITICAL_WEBHOOK "https://hooks.slack.com/services/XXXX/YYYY/ZZZZ"
 
-# 
+kestra secrets create SLACK_GENERAL_WEBHOOK "https://hooks.slack.com/services/AAAA/BBBB/CCCC"
 
-# \# 👀 Observability Benefits
+kestra secrets create SLACK_INFO_WEBHOOK "https://hooks.slack.com/services/DDDD/EEEE/FFFF"
+```
 
-# 
+---
 
-# This architecture provides:
+# 🎫 ServiceNow Configuration
 
-# 
+## 📌 Required Credentials
 
-# 📡 centralized workflow monitoring
+You need:
 
-# ⚡ real-time operational visibility
+* 🌐 ServiceNow domain
+* 👤 Username
+* 🔑 Password
+* 🆔 Caller ID
 
-# 🏢 enterprise incident automation
+---
 
-# 📏 standardized failure handling
+## 🔐 Configure ServiceNow Secrets
 
-# 🧾 audit-ready execution tracking
+```bash
+kestra secrets create SNOW_DOMAIN "your-instance.service-now.com"
 
-# ♻️ reusable orchestration patterns
+kestra secrets create SNOW_USERNAME "admin"
 
-# 
+kestra secrets create SNOW_PASSWORD "password"
 
-# \---
+kestra secrets create SNOW_CALLER_ID "system"
+```
 
-# 
+---
 
-# \# ✨ Features
+# 📥 Importing the Workflow
 
-# 
+## 🖥️ Option 1 — Kestra UI
 
-# \## 🤖 Automated Workflow Failure Detection
+Open Kestra UI
 
-# 
+Navigate to:
 
-# Detects:
+`Flows`
 
-# 
+Click:
 
-# ❌ FAILED
+* ➕ Create Flow
+* 📋 Paste YAML
+* 💾 Save
 
-# ⚠️ WARNING
+---
 
-# 🛑 KILLED executions
+## 💻 Option 2 — CLI
 
-# 
+```bash
+kestra flow create flows/incident-management.yaml
+```
 
-# Event-driven orchestration using Flow Triggers ⚡
+---
 
-# 
+# 💥 Sample Failing Workflow
 
-# \---
+The repository includes a sample workflow intentionally designed to fail.
 
-# 
+It demonstrates:
 
-# \## 💬 Real-Time Slack Notifications
+* ⚡ Automatic trigger detection
+* 📦 Error context propagation
+* 💬 Slack alerting
+* 🎫 ServiceNow incident creation
 
-# 
+---
 
-# Sends alerts to dedicated Slack channels 📢
+# 📦 Error Context Structure
 
-# 
+## 📌 Example propagated payload
 
-# Severity-based routing:
+```json
+{
+  "message": "Unknown Error",
+  "severity": "HIGH",
+  "environment": "dev",
+  "applicationName": "elephant-service",
+  "executionId": "12345"
+}
+```
 
-# 
+---
 
-# 🔴 High
+# 🚦 Severity Routing
 
-# 🟠 Medium
+| Severity  | Action                         |
+| --------- | ------------------------------ |
+| 🔴 High   | Slack + P1 ServiceNow Incident |
+| 🟠 Medium | Slack + P2 ServiceNow Incident |
+| 🟢 Low    | Slack Notification Only        |
 
-# 🟢 Low
+---
 
-# 
+# 🔁 Retry Strategy
 
-# Includes:
+All critical integrations include:
 
-# 
+```yaml
+retry:
+  type: exponential
+  interval: PT15S
+  maxInterval: PT5M
+  maxAttempt: 5
+  warningOnRetry: true
+```
 
-# 🆔 Flow ID
+---
 
-# 🔢 Execution ID
+# 🚀 Recommended Production Enhancements
 
-# 🗂️ Namespace
+Add:
 
-# 🌍 Environment
+* 🤖 AI-powered remediation suggestions
+* 📊 Historical incident correlation
+* 📟 PagerDuty integration
+* 💬 Microsoft Teams integration
+* 📡 OpenTelemetry tracing
+* ☁️ S3/GCS archival
+* 🛠️ Auto-remediation workflows
 
-# ❌ Failed task
+---
 
-# 💬 Error message
+# 🔒 Security Best Practices
 
-# 
+## ❌ Never Hardcode
 
-# \---
+* 🔑 passwords
+* 🌐 webhook URLs
+* 🎟️ tokens
+* 🧠 API keys
 
-# 
+✅ Always use Kestra Secrets.
 
-# \## 🎫 ServiceNow Incident Creation
+---
 
-# 
+# 🛠️ Troubleshooting
 
-# Automatically creates:
+## 💬 Slack Notifications Not Working
 
-# 
+Check:
 
-# 🚨 P1 incidents for High severity
+* 🌐 Webhook URL validity
+* 🔐 Slack app permissions
+* 📢 Channel access
 
-# ⚠️ P2 incidents for Medium severity
+---
 
-# 
+## 🎫 ServiceNow Incident Not Created
 
-# Includes:
+Verify:
 
-# 
+* 👤 ServiceNow credentials
+* 🗂️ Table permissions
+* 🌐 Firewall/network rules
 
-# 🔗 Correlation IDs
+---
 
-# 🏷️ Application metadata
+## ⚡ Trigger Not Firing
 
-# 🌍 Environment metadata
+Ensure:
 
-# 🔄 Retry count
+* 📂 Failed flow namespace matches trigger preconditions
+* ❌ Execution state is FAILED/WARNING/KILLED
 
-# 📦 Payload snapshot
+---
 
-# 
+# 🤝 Contributing
 
-# \---
+Contributions are welcome. 🎉
 
-# 
+Please open:
 
-# \## 🧠 Dynamic Execution Context Capture
+* 🐞 Issues
+* 💡 Feature Requests
+* 🔀 Pull Requests
 
-# 
+---
 
-# Captures:
+# 📄 License
 
-# 
+MIT License 📜
 
-# ❌ Failed task name
+---
 
-# 💬 Error message
+# 🙌 Acknowledgements
 
-# 📚 Stack trace
+Built using:
 
-# 📦 Input payload
+* ⚙️ Kestra
+* 💬 Slack
+* 🎫 ServiceNow
 
-# 🔄 Retry attempts
+---
 
-# 🆔 Execution metadata
+# 👨‍💻 Author
 
-# 
+Created by **Prajwal Prasanna** 🚀
 
-# \---
-
-# 
-
-# \## 🛡️ Production-Ready Reliability
-
-# 
-
-# Includes:
-
-# 
-
-# 🔁 Exponential retries
-
-# ⏳ Retry backoff
-
-# 📈 Retry max intervals
-
-# ⌛ Timeout handling
-
-# 🔐 Secret management
-
-# 🧩 Failure isolation patterns
-
-# 
-
-# \---
-
-# 
-
-# \# 🏗️ Architecture
-
-# 
-
-# ```text
-
-# Kestra Workflow Failure
-
-# &#x20;       │
-
-# &#x20;       ▼
-
-# Flow Trigger Listener
-
-# &#x20;       │
-
-# &#x20;       ▼
-
-# Context Enrichment
-
-# &#x20;       │
-
-# &#x20;┌──────┼──────┐
-
-# &#x20;▼      ▼      ▼
-
-# Slack  SNOW   Logging
-
-# Alert Incident Audit
-
-# ```
-
-# 
-
-# \---
-
-# 
-
-# \# 📁 Repository Structure
-
-# 
-
-# ```text
-
-# .
-
-# ├── flows/
-
-# │   ├── incident-management.yaml
-
-# │   └── sample-failing-flow.yaml
-
-# │
-
-# ├── README.md
-
-# └── assets/
-
-# ```
-
-# 
-
-# \---
-
-# 
-
-# \# ✅ Prerequisites
-
-# 
-
-# Before using this project, ensure you have:
-
-# 
-
-# ⚙️ Kestra installed
-
-# 💬 A Slack workspace
-
-# 🎫 A ServiceNow instance
-
-# 🔐 Kestra secrets configured
-
-# 
-
-# \---
-
-# 
-
-# \# 🚀 Installing Kestra
-
-# 
-
-# \## 🐳 Docker Compose
-
-# 
-
-# ```yaml
-
-# version: '3'
-
-# 
-
-# services:
-
-# &#x20; kestra:
-
-# &#x20;   image: kestra/kestra:latest
-
-# 
-
-# &#x20;   ports:
-
-# &#x20;     - "8080:8080"
-
-# 
-
-# &#x20;   command: server standalone
-
-# ```
-
-# 
-
-# \## ▶️ Start Kestra
-
-# 
-
-# ```bash
-
-# docker compose up -d
-
-# ```
-
-# 
-
-# \## 🌐 Open
-
-# 
-
-# ```text
-
-# http://localhost:8080
-
-# ```
-
-# 
-
-# \---
-
-# 
-
-# \# 💬 Slack Webhook Configuration
-
-# 
-
-# \## 1️⃣ Step 1 — Create a Slack App
-
-# 
-
-# Open:
-
-# 
-
-# `Slack API Apps Page`
-
-# 
-
-# Click:
-
-# 
-
-# ➕ Create New App
-
-# 🛠️ From Scratch
-
-# 
-
-# \---
-
-# 
-
-# \## 2️⃣ Step 2 — Enable Incoming Webhooks
-
-# 
-
-# Inside your Slack app:
-
-# 
-
-# Navigate to:
-
-# 
-
-# `Incoming Webhooks`
-
-# 
-
-# Enable:
-
-# 
-
-# ✅ Activate Incoming Webhooks
-
-# 
-
-# \---
-
-# 
-
-# \## 3️⃣ Step 3 — Create Webhooks
-
-# 
-
-# Click:
-
-# 
-
-# `Add New Webhook to Workspace`
-
-# 
-
-# Select channels such as:
-
-# 
-
-# 🚨 #critical-alerts
-
-# 🧑‍💻 #dev-alerts
-
-# 📢 #flow-notifications
-
-# 
-
-# Copy generated webhook URLs.
-
-# 
-
-# \## 📌 Example
-
-# 
-
-# ```text
-
-# https://hooks.slack.com/services/XXXX/YYYY/ZZZZ
-
-# ```
-
-# 
-
-# \---
-
-# 
-
-# \# 🔐 Configure Slack Secrets in Kestra
-
-# 
-
-# Add secrets using Kestra CLI:
-
-# 
-
-# ```bash
-
-# kestra secrets create SLACK\_CRITICAL\_WEBHOOK "https://hooks.slack.com/services/XXXX/YYYY/ZZZZ"
-
-# 
-
-# kestra secrets create SLACK\_GENERAL\_WEBHOOK "https://hooks.slack.com/services/AAAA/BBBB/CCCC"
-
-# 
-
-# kestra secrets create SLACK\_INFO\_WEBHOOK "https://hooks.slack.com/services/DDDD/EEEE/FFFF"
-
-# ```
-
-# 
-
-# \---
-
-# 
-
-# \# 🎫 ServiceNow Configuration
-
-# 
-
-# \## 📌 Required Credentials
-
-# 
-
-# You need:
-
-# 
-
-# 🌐 ServiceNow domain
-
-# 👤 Username
-
-# 🔑 Password
-
-# 🆔 Caller ID
-
-# 
-
-# \---
-
-# 
-
-# \## 🔐 Configure ServiceNow Secrets
-
-# 
-
-# ```bash
-
-# kestra secrets create SNOW\_DOMAIN "your-instance.service-now.com"
-
-# 
-
-# kestra secrets create SNOW\_USERNAME "admin"
-
-# 
-
-# kestra secrets create SNOW\_PASSWORD "password"
-
-# 
-
-# kestra secrets create SNOW\_CALLER\_ID "system"
-
-# ```
-
-# 
-
-# \---
-
-# 
-
-# \# 📥 Importing the Workflow
-
-# 
-
-# \## 🖥️ Option 1 — Kestra UI
-
-# 
-
-# Open Kestra UI
-
-# 
-
-# Navigate to:
-
-# 
-
-# `Flows`
-
-# 
-
-# Click:
-
-# 
-
-# ➕ Create Flow
-
-# 📋 Paste YAML
-
-# 💾 Save
-
-# 
-
-# \---
-
-# 
-
-# \## 💻 Option 2 — CLI
-
-# 
-
-# ```bash
-
-# kestra flow create flows/incident-management.yaml
-
-# ```
-
-# 
-
-# \---
-
-# 
-
-# \# 💥 Sample Failing Workflow
-
-# 
-
-# The repository includes a sample workflow intentionally designed to fail.
-
-# 
-
-# It demonstrates:
-
-# 
-
-# ⚡ Automatic trigger detection
-
-# 📦 Error context propagation
-
-# 💬 Slack alerting
-
-# 🎫 ServiceNow incident creation
-
-# 
-
-# \---
-
-# 
-
-# \# 📦 Error Context Structure
-
-# 
-
-# \## 📌 Example propagated payload
-
-# 
-
-# ```json
-
-# {
-
-# &#x20; "message": "Unknown Error",
-
-# &#x20; "severity": "HIGH",
-
-# &#x20; "environment": "dev",
-
-# &#x20; "applicationName": "elephant-service",
-
-# &#x20; "executionId": "12345"
-
-# }
-
-# ```
-
-# 
-
-# \---
-
-# 
-
-# \# 🚦 Severity Routing
-
-# 
-
-# | Severity  | Action                         |
-
-# | --------- | ------------------------------ |
-
-# | 🔴 High   | Slack + P1 ServiceNow Incident |
-
-# | 🟠 Medium | Slack + P2 ServiceNow Incident |
-
-# | 🟢 Low    | Slack Notification Only        |
-
-# 
-
-# \---
-
-# 
-
-# \# 🔁 Retry Strategy
-
-# 
-
-# All critical integrations include:
-
-# 
-
-# ```yaml
-
-# retry:
-
-# &#x20; type: exponential
-
-# &#x20; interval: PT15S
-
-# &#x20; maxInterval: PT5M
-
-# &#x20; maxAttempt: 5
-
-# &#x20; warningOnRetry: true
-
-# ```
-
-# 
-
-# \---
-
-# 
-
-# \# 🚀 Recommended Production Enhancements
-
-# 
-
-# Add:
-
-# 
-
-# 🤖 AI-powered remediation suggestions
-
-# 📊 Historical incident correlation
-
-# 📟 PagerDuty integration
-
-# 💬 Microsoft Teams integration
-
-# 📡 OpenTelemetry tracing
-
-# ☁️ S3/GCS archival
-
-# 🛠️ Auto-remediation workflows
-
-# 
-
-# \---
-
-# 
-
-# \# 🔒 Security Best Practices
-
-# 
-
-# \## ❌ Never Hardcode
-
-# 
-
-# 🔑 passwords
-
-# 🌐 webhook URLs
-
-# 🎟️ tokens
-
-# 🧠 API keys
-
-# 
-
-# ✅ Always use Kestra Secrets.
-
-# 
-
-# \---
-
-# 
-
-# \# 🛠️ Troubleshooting
-
-# 
-
-# \## 💬 Slack Notifications Not Working
-
-# 
-
-# Check:
-
-# 
-
-# 🌐 Webhook URL validity
-
-# 🔐 Slack app permissions
-
-# 📢 Channel access
-
-# 
-
-# \---
-
-# 
-
-# \## 🎫 ServiceNow Incident Not Created
-
-# 
-
-# Verify:
-
-# 
-
-# 👤 ServiceNow credentials
-
-# 🗂️ Table permissions
-
-# 🌐 Firewall/network rules
-
-# 
-
-# \---
-
-# 
-
-# \## ⚡ Trigger Not Firing
-
-# 
-
-# Ensure:
-
-# 
-
-# 📂 Failed flow namespace matches trigger preconditions
-
-# ❌ Execution state is FAILED/WARNING/KILLED
-
-# 
-
-# \---
-
-# 
-
-# \# 🤝 Contributing
-
-# 
-
-# Contributions are welcome. 🎉
-
-# 
-
-# Please open:
-
-# 
-
-# 🐞 Issues
-
-# 💡 Feature Requests
-
-# 🔀 Pull Requests
-
-# 
-
-# \---
-
-# 
-
-# \# 📄 License
-
-# 
-
-# MIT License 📜
-
-# 
-
-# \---
-
-# 
-
-# \# 🙌 Acknowledgements
-
-# 
-
-# Built using:
-
-# 
-
-# ⚙️ Kestra
-
-# 💬 Slack
-
-# 🎫 ServiceNow
-
-# 
-
-# \---
-
-# 
-
-# \# 👨‍💻 Author
-
-# 
-
-# Created by \*\*Prajwal Prasanna\*🚀
-
-# 
-
-# ⭐ If you found this project useful, consider starring the repository.
-
-# 
-
-
+⭐ If you found this project useful, consider starring the repository.
 
