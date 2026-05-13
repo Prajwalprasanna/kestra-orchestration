@@ -1,0 +1,289 @@
+# Required Secrets:
+# - SLACK_CRITICAL_WEBHOOK
+# - SLACK_GENERAL_WEBHOOK
+# - SLACK_INFO_WEBHOOK
+# - SNOW_DOMAIN
+# - SNOW_USERNAME
+# - SNOW_PASSWORD
+# - SNOW_CALLER_ID
+#
+# Example:
+# kestra secrets create SLACK_CRITICAL_WEBHOOK <value>
+# ================================
+
+id: incident-management
+namespace: dev
+
+description: >
+  Automatically detects workflow failures, captures execution context, notifies support teams via Slack, creates incidents in ServiceNow, and orchestrates escalation/recovery.
+
+triggers:
+  - id: on_flow_failure
+    type: io.kestra.plugin.core.trigger.Flow
+
+    states:
+      - FAILED
+      - KILLED
+      - WARNING
+
+    preconditions:
+      id: monitor_company_team_flows
+
+      flows:
+        - namespace: company.team
+          states:
+            - FAILED
+            - KILLED
+            - WARNING
+
+variables:
+
+  flowId: "{{ trigger.flowId }}"
+  executionId: "{{ trigger.executionId }}"
+  namespace: "{{ trigger.namespace }}"
+  triggeredState: "{{ trigger.state }}"
+
+  errorMessage: "{{ trigger.outputs.errorDetails.message | default('Unknown Error') }}"
+
+  stackTrace: "{{ trigger.outputs.errorDetails.stackTrace | default('No stack trace provided') }}"
+
+  failedTaskName: "{{ trigger.outputs.errorDetails.failedTaskId | default('Unknown Task') }}"
+
+  retryCount: "{{ trigger.outputs.errorDetails.retryAttempt | default(0) }}"
+
+  failedInputPayload: "{{ trigger.outputs.errorDetails.inputPayload | default({}) }}"
+
+  environment: "{{ trigger.outputs.errorDetails.environment | default('dev') }}"
+
+  businessImpact: "{{ trigger.outputs.errorDetails.businessImpact | default('Medium') }}"
+
+  applicationName: "{{ trigger.outputs.errorDetails.applicationName | default('Unknown App') }}"
+
+  severity: "{{ trigger.outputs.errorDetails.severity | default('Medium') }}"
+
+tasks:
+
+  - id: log_incident_details
+    type: io.kestra.plugin.core.log.Log
+    level: INFO
+
+    message: >
+      Incident Detected: Flow ID={{ render(vars.flowId) }} Execution ID={{ render(vars.executionId) }} Namespace={{ render(vars.namespace) }} State={{ render(vars.triggeredState) }} Severity={{ render(vars.severity) }} Application={{ render(vars.applicationName) }} Environment={{ render(vars.environment) }} Failed Task={{ render(vars.failedTaskName) }} Error Message={{ render(vars.errorMessage) }}
+
+  - id: orchestrate_incident_response
+    type: io.kestra.plugin.core.flow.Switch
+
+    value: "{{ render(vars.severity) }}"
+
+    cases:
+
+      High:
+
+        - id: handle_high_severity_incident
+          type: io.kestra.plugin.core.log.Log
+          level: ERROR
+
+          message: >
+            Executing HIGH severity response for Flow {{ render(vars.flowId) }} ({{ render(vars.executionId) }})
+
+        - id: slack_alert_critical
+          type: io.kestra.plugin.notifications.slack.SlackExecution
+
+          timeout: PT2M
+
+          retry:
+            type: exponential
+            interval: PT15S
+            maxInterval: PT5M
+            maxAttempt: 5
+            warningOnRetry: true
+
+          url: "{{ secret('SLACK_CRITICAL_WEBHOOK') }}"
+
+          channel: "#critical-alerts"
+
+          messageText: |
+            :rotating_light: *CRITICAL INCIDENT - Kestra Flow Failure*
+
+            *Execution ID:* `{{ render(vars.executionId) }}`
+            *Namespace:* `{{ render(vars.namespace) }}`
+            *State:* `{{ render(vars.triggeredState) }}`
+            *Severity:* `{{ render(vars.severity) }}`
+            *Application:* `{{ render(vars.applicationName) }}`
+            *Environment:* `{{ render(vars.environment) }}`
+            *Failed Task:* `{{ render(vars.failedTaskName) }}`
+            *Error:* `{{ render(vars.errorMessage) }}`
+
+        - id: create_servicenow_p1_incident
+          type: io.kestra.plugin.servicenow.Post
+
+          timeout: PT3M
+
+          retry:
+            type: exponential
+            interval: PT15S
+            maxInterval: PT5M
+            maxAttempt: 5
+            warningOnRetry: true
+
+          domain: "{{ secret('SNOW_DOMAIN') }}"
+          username: "{{ secret('SNOW_USERNAME') }}"
+          password: "{{ secret('SNOW_PASSWORD') }}"
+
+          table: incident
+
+          data:
+
+            short_description: >
+              P1: Kestra Flow Failure - {{ render(vars.flowId) }}
+
+            description: |
+              Kestra Flow Failure Detected
+
+              Flow ID: {{ render(vars.flowId) }}
+              Execution ID: {{ render(vars.executionId) }}
+              Namespace: {{ render(vars.namespace) }}
+              State: {{ render(vars.triggeredState) }}
+
+              Severity: {{ render(vars.severity) }}
+              Application: {{ render(vars.applicationName) }}
+              Environment: {{ render(vars.environment) }}
+
+              Failed Task: {{ render(vars.failedTaskName) }}
+
+              Error Message:
+              {{ render(vars.errorMessage) }}
+
+              Stack Trace:
+              {{ render(vars.stackTrace) }}
+
+            urgency: "1"
+            impact: "1"
+
+            category: "Software"
+            subcategory: "Application Error"
+
+            u_kestra_flow_id: "{{ render(vars.flowId) }}"
+            u_kestra_execution_id: "{{ render(vars.executionId) }}"
+            u_kestra_namespace: "{{ render(vars.namespace) }}"
+            u_environment: "{{ render(vars.environment) }}"
+            u_application_name: "{{ render(vars.applicationName) }}"
+            u_failed_task: "{{ render(vars.failedTaskName) }}"
+            u_error_message: "{{ render(vars.errorMessage) }}"
+            u_correlation_id: "{{ render(vars.executionId) }}"
+            u_retry_count: "{{ render(vars.retryCount) }}"
+            u_failed_payload: "{{ render(vars.failedInputPayload | json) }}"
+
+            caller_id: "{{ secret('SNOW_CALLER_ID') }}"
+
+      Medium:
+
+        - id: handle_medium_severity_incident
+          type: io.kestra.plugin.core.log.Log
+          level: WARN
+
+          message: >
+            Executing MEDIUM severity response for Flow {{ render(vars.flowId) }} ({{ render(vars.executionId) }})
+
+        - id: slack_alert_general
+          type: io.kestra.plugin.notifications.slack.SlackExecution
+
+          timeout: PT2M
+
+          retry:
+            type: exponential
+            interval: PT15S
+            maxInterval: PT5M
+            maxAttempt: 5
+            warningOnRetry: true
+
+          url: "{{ secret('SLACK_GENERAL_WEBHOOK') }}"
+
+          channel: "#dev-alerts"
+
+          messageText: |
+            :warning: *MEDIUM SEVERITY INCIDENT*
+
+            *Execution ID:* `{{ render(vars.executionId) }}`
+            *Namespace:* `{{ render(vars.namespace) }}`
+            *Severity:* `{{ render(vars.severity) }}`
+            *Application:* `{{ render(vars.applicationName) }}`
+            *Environment:* `{{ render(vars.environment) }}`
+            *Error:* `{{ render(vars.errorMessage) }}`
+
+        - id: create_servicenow_p2_incident
+          type: io.kestra.plugin.servicenow.Post
+
+          timeout: PT3M
+
+          retry:
+            type: exponential
+            interval: PT15S
+            maxInterval: PT5M
+            maxAttempt: 5
+            warningOnRetry: true
+
+          domain: "{{ secret('SNOW_DOMAIN') }}"
+          username: "{{ secret('SNOW_USERNAME') }}"
+          password: "{{ secret('SNOW_PASSWORD') }}"
+
+          table: incident
+
+          data:
+
+            short_description: >
+              P2: Kestra Flow Failure - {{ render(vars.flowId) }}
+
+            description: |
+              Kestra Flow Failure Detected
+
+              Flow ID: {{ render(vars.flowId) }}
+              Execution ID: {{ render(vars.executionId) }}
+
+              Error:
+              {{ render(vars.errorMessage) }}
+
+            urgency: "2"
+            impact: "2"
+
+            category: "Software"
+            subcategory: "Application Error"
+
+            u_kestra_execution_id: "{{ render(vars.executionId) }}"
+            u_correlation_id: "{{ render(vars.executionId) }}"
+
+            caller_id: "{{ secret('SNOW_CALLER_ID') }}"
+
+      Low:
+
+        - id: slack_alert_info
+          type: io.kestra.plugin.notifications.slack.SlackExecution
+
+          timeout: PT2M
+
+          retry:
+            type: exponential
+            interval: PT15S
+            maxInterval: PT5M
+            maxAttempt: 5
+            warningOnRetry: true
+
+          url: "{{ secret('SLACK_INFO_WEBHOOK') }}"
+
+          channel: "#flow-notifications"
+
+          messageText: |
+            :information_source: *LOW SEVERITY FLOW NOTIFICATION*
+
+            *Execution ID:* `{{ render(vars.executionId) }}`
+            *Severity:* `{{ render(vars.severity) }}`
+            *Error:* `{{ render(vars.errorMessage) }}`
+
+    defaults:
+
+      - id: handle_unknown_severity
+        type: io.kestra.plugin.core.log.Log
+        level: WARN
+
+        message: >
+          Unhandled Severity '{{ render(vars.severity) }}' for Flow {{ render(vars.flowId) }} ({{ render(vars.executionId) }})

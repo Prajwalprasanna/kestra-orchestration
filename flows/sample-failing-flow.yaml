@@ -1,0 +1,53 @@
+id: sample-failing-flow
+namespace: company.team
+
+labels:
+  environment: dev
+  app_name: elephant-service
+  business_impact: High
+
+triggers:
+  - id: morning_schedule
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 9 * * *"
+
+inputs:
+  - id: uri
+    type: URI
+    defaults: https://kestra.io
+
+tasks:
+
+  # Intentional failure
+  - id: will_fail
+    type: io.kestra.plugin.core.log.Log
+    message: Hello {{ inputs.nam }} 🚀
+
+  - id: make_request
+    type: io.kestra.plugin.core.http.Request
+    uri: "https://kestra.io"
+
+errors:
+  - id: capture_failure
+    type: io.kestra.plugin.core.debug.Return
+
+    format: |
+      {
+        "message": "{{ error.message | default('Unknown Error') }}",
+        "stackTrace": "{{ error.stackTrace | default('') }}",
+        "failedTaskId": "{{ taskrun.value.taskId | default('Unknown') }}",
+        "retryAttempt": "{{ taskrun.value.attemptsCount | default(0) }}",
+        "executionId": "{{ execution.id }}",
+        "flowId": "{{ flow.id }}",
+        "namespace": "{{ flow.namespace }}",
+        "severity": "High",
+        "environment": "{{ labels.environment | default('dev') }}",
+        "applicationName": "{{ labels.app_name | default('Unknown App') }}",
+        "businessImpact": "{{ labels.business_impact | default('Medium') }}",
+        "inputPayload": {{ inputs | json }}
+      }
+
+outputs:
+  - id: errorDetails
+    type: JSON
+    value: "{{ outputs.capture_failure.value }}"
