@@ -10,15 +10,15 @@
 
 # 
 
-# \* 📢 Slack notifications
+# 📢 Slack notifications
 
-# \* 🎫 ServiceNow incident creation
+# 🎫 ServiceNow incident creation
 
-# \* 📝 Operational logging
+# 📝 Operational logging
 
-# \* 🚦 Severity-based routing
+# 🚦 Severity-based routing
 
-# \* 🔁 Retry orchestration
+# 🔁 Retry orchestration
 
 # 
 
@@ -42,15 +42,15 @@
 
 # 
 
-# \* ❌ failed task name
+# ❌ failed task name
 
-# \* 💬 error message
+# 💬 error message
 
-# \* 📚 stack trace
+# 📚 stack trace
 
-# \* 🔄 retry count
+# 🔄 retry count
 
-# \* 📦 input payload
+# 📦 input payload
 
 # 
 
@@ -198,13 +198,13 @@
 
 # 
 
-# \* 📢 Slack alerts
+# 📢 Slack alerts
 
-# \* 🎫 ServiceNow incidents
+# 🎫 ServiceNow incidents
 
-# \* 📝 Operational logs
+# 📝 Operational logs
 
-# \* 🚦 Severity classification
+# 🚦 Severity classification
 
 # 
 
@@ -240,17 +240,17 @@
 
 # 
 
-# \* 📡 centralized workflow monitoring
+# 📡 centralized workflow monitoring
 
-# \* ⚡ real-time operational visibility
+# ⚡ real-time operational visibility
 
-# \* 🏢 enterprise incident automation
+# 🏢 enterprise incident automation
 
-# \* 📏 standardized failure handling
+# 📏 standardized failure handling
 
-# \* 🧾 audit-ready execution tracking
+# 🧾 audit-ready execution tracking
 
-# \* ♻️ reusable orchestration patterns
+# ♻️ reusable orchestration patterns
 
 # 
 
@@ -270,11 +270,11 @@
 
 # 
 
-# \* ❌ FAILED
+# ❌ FAILED
 
-# \* ⚠️ WARNING
+# ⚠️ WARNING
 
-# \* 🛑 KILLED executions
+# 🛑 KILLED executions
 
 # 
 
@@ -298,11 +298,11 @@
 
 # 
 
-# \* 🔴 High
+# 🔴 High
 
-# \* 🟠 Medium
+# 🟠 Medium
 
-# \* 🟢 Low
+# 🟢 Low
 
 # 
 
@@ -310,17 +310,17 @@
 
 # 
 
-# \* 🆔 Flow ID
+# 🆔 Flow ID
 
-# \* 🔢 Execution ID
+# 🔢 Execution ID
 
-# \* 🗂️ Namespace
+# 🗂️ Namespace
 
-# \* 🌍 Environment
+# 🌍 Environment
 
-# \* ❌ Failed task
+# ❌ Failed task
 
-# \* 💬 Error message
+# 💬 Error message
 
 # 
 
@@ -336,9 +336,9 @@
 
 # 
 
-# \* 🚨 P1 incidents for High severity
+# 🚨 P1 incidents for High severity
 
-# \* ⚠️ P2 incidents for Medium severity
+# ⚠️ P2 incidents for Medium severity
 
 # 
 
@@ -346,15 +346,15 @@
 
 # 
 
-# \* 🔗 Correlation IDs
+# 🔗 Correlation IDs
 
-# \* 🏷️ Application metadata
+# 🏷️ Application metadata
 
-# \* 🌍 Environment metadata
+# 🌍 Environment metadata
 
-# \* 🔄 Retry count
+# 🔄 Retry count
 
-# \* 📦 Payload snapshot
+# 📦 Payload snapshot
 
 # 
 
@@ -370,17 +370,17 @@
 
 # 
 
-# \* ❌ Failed task name
+# ❌ Failed task name
 
-# \* 💬 Error message
+# 💬 Error message
 
-# \* 📚 Stack trace
+# 📚 Stack trace
 
-# \* 📦 Input payload
+# 📦 Input payload
 
-# \* 🔄 Retry attempts
+# 🔄 Retry attempts
 
-# \* 🆔 Execution metadata
+# 🆔 Execution metadata
 
 # 
 
@@ -396,17 +396,17 @@
 
 # 
 
-# \* 🔁 Exponential retries
+# 🔁 Exponential retries
 
-# \* ⏳ Retry backoff
+# ⏳ Retry backoff
 
-# \* 📈 Retry max intervals
+# 📈 Retry max intervals
 
-# \* ⌛ Timeout handling
+# ⌛ Timeout handling
 
-# \* 🔐 Secret management
+# 🔐 Secret management
 
-# \* 🧩 Failure isolation patterns
+# 🧩 Failure isolation patterns
 
 # 
 
@@ -488,13 +488,13 @@
 
 # 
 
-# \* ⚙️ Kestra installed
+# ⚙️ Kestra installed
 
-# \* 💬 A Slack workspace
+# 💬 A Slack workspace
 
-# \* 🎫 A ServiceNow instance
+# 🎫 A ServiceNow instance
 
-# \* 🔐 Kestra secrets configured
+# 🔐 Kestra secrets configured
 
 # 
 
@@ -584,9 +584,9 @@
 
 # 
 
-# \* ➕ Create New App
+# ➕ Create New App
 
-# \* 🛠️ From Scratch
+# 🛠️ From Scratch
 
 # 
 
@@ -638,11 +638,11 @@
 
 # 
 
-# \* 🚨 #critical-alerts
+# 🚨 #critical-alerts
 
-# \* 🧑‍💻 #dev-alerts
+# 🧑‍💻 #dev-alerts
 
-# \* 📢 #flow-notifications
+# 📢 #flow-notifications
 
 # 
 
@@ -706,13 +706,13 @@
 
 # 
 
-# \* 🌐 ServiceNow domain
+# 🌐 ServiceNow domain
 
-# \* 👤 Username
+# 👤 Username
 
-# \* 🔑 Password
+# 🔑 Password
 
-# \* 🆔 Caller ID
+# 🆔 Caller ID
 
 # 
 
@@ -772,11 +772,11 @@
 
 # 
 
-# \* ➕ Create Flow
+# ➕ Create Flow
 
-# \* 📋 Paste YAML
+# 📋 Paste YAML
 
-# \* 💾 Save
+# 💾 Save
 
 # 
 
@@ -812,13 +812,13 @@
 
 # 
 
-# \* ⚡ Automatic trigger detection
+# ⚡ Automatic trigger detection
 
-# \* 📦 Error context propagation
+# 📦 Error context propagation
 
-# \* 💬 Slack alerting
+# 💬 Slack alerting
 
-# \* 🎫 ServiceNow incident creation
+# 🎫 ServiceNow incident creation
 
 # 
 
@@ -916,19 +916,19 @@
 
 # 
 
-# \* 🤖 AI-powered remediation suggestions
+# 🤖 AI-powered remediation suggestions
 
-# \* 📊 Historical incident correlation
+# 📊 Historical incident correlation
 
-# \* 📟 PagerDuty integration
+# 📟 PagerDuty integration
 
-# \* 💬 Microsoft Teams integration
+# 💬 Microsoft Teams integration
 
-# \* 📡 OpenTelemetry tracing
+# 📡 OpenTelemetry tracing
 
-# \* ☁️ S3/GCS archival
+# ☁️ S3/GCS archival
 
-# \* 🛠️ Auto-remediation workflows
+# 🛠️ Auto-remediation workflows
 
 # 
 
@@ -944,13 +944,13 @@
 
 # 
 
-# \* 🔑 passwords
+# 🔑 passwords
 
-# \* 🌐 webhook URLs
+# 🌐 webhook URLs
 
-# \* 🎟️ tokens
+# 🎟️ tokens
 
-# \* 🧠 API keys
+# 🧠 API keys
 
 # 
 
@@ -974,11 +974,11 @@
 
 # 
 
-# \* 🌐 Webhook URL validity
+# 🌐 Webhook URL validity
 
-# \* 🔐 Slack app permissions
+# 🔐 Slack app permissions
 
-# \* 📢 Channel access
+# 📢 Channel access
 
 # 
 
@@ -994,11 +994,11 @@
 
 # 
 
-# \* 👤 ServiceNow credentials
+# 👤 ServiceNow credentials
 
-# \* 🗂️ Table permissions
+# 🗂️ Table permissions
 
-# \* 🌐 Firewall/network rules
+# 🌐 Firewall/network rules
 
 # 
 
@@ -1014,9 +1014,9 @@
 
 # 
 
-# \* 📂 Failed flow namespace matches trigger preconditions
+# 📂 Failed flow namespace matches trigger preconditions
 
-# \* ❌ Execution state is FAILED/WARNING/KILLED
+# ❌ Execution state is FAILED/WARNING/KILLED
 
 # 
 
@@ -1036,11 +1036,11 @@
 
 # 
 
-# \* 🐞 Issues
+# 🐞 Issues
 
-# \* 💡 Feature Requests
+# 💡 Feature Requests
 
-# \* 🔀 Pull Requests
+# 🔀 Pull Requests
 
 # 
 
@@ -1068,11 +1068,11 @@
 
 # 
 
-# \* ⚙️ Kestra
+# ⚙️ Kestra
 
-# \* 💬 Slack
+# 💬 Slack
 
-# \* 🎫 ServiceNow
+# 🎫 ServiceNow
 
 # 
 
@@ -1084,7 +1084,7 @@
 
 # 
 
-# Created by \*\*Prajwal Prasanna\*\* 🚀
+# Created by \*\*Prajwal Prasanna\*🚀
 
 # 
 
